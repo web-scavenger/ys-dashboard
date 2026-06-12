@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { errorResponseSchema, helloResponseSchema } from '@ys/contracts';
+import { errorResponseSchema } from '@ys/contracts';
+import { helloResponseSchema } from './dto/hello.dto.js';
 import type { HelloService } from './hello.service.js';
 
 /**

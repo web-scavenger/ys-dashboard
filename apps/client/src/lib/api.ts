@@ -1,5 +1,5 @@
 import type { ZodType } from 'zod';
-import { errorResponseSchema, helloResponseSchema } from '@ys/contracts';
+import { errorResponseSchema } from '@ys/contracts';
 
 // Fall back to the server's default dev port so a fresh checkout works without a
 // local .env (Vite does not load .env.example).
@@ -21,9 +21,10 @@ export class ApiError extends Error {
  * `ErrorResponse` envelope as an `ApiError`. On success it validates the body
  * against the route's Zod schema, so a server/client contract mismatch throws
  * here instead of leaking a wrongly-typed value into the app. React Query
- * handles retries/loading/error state on top of this.
+ * handles retries/loading/error state on top of this. Feature `api/` modules
+ * build their typed calls on top of this transport.
  */
-async function request<T>(
+export async function request<T>(
   path: string,
   schema: ZodType<T>,
   init?: RequestInit,
@@ -45,7 +46,3 @@ async function request<T>(
 
   return schema.parse(body);
 }
-
-export const api = {
-  getHello: () => request('/api/hello', helloResponseSchema),
-};
