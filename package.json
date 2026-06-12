@@ -8,7 +8,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "build:types": "pnpm --filter @ys/types build",
+    "build:types": "pnpm --filter @ys/contracts build",
     "build": "pnpm -r build",
     "dev": "pnpm build:types && pnpm -r --parallel --stream dev",
     "typecheck": "pnpm build:types && pnpm -r typecheck",
