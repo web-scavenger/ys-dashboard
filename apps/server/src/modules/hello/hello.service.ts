@@ -1,5 +1,5 @@
 import type { HelloResponse } from '@ys/contracts';
-import type { HelloRepository } from './hello.repository.js';
+import type { HelloRepository } from './repositories/hello.repository.js';
 
 /**
  * Business-logic layer for the hello module. Depends only on the repository

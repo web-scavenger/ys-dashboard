@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
-import { registerErrorHandler } from '../src/common/error-handler.js';
-import { NotFoundError } from '../src/common/errors.js';
+import { registerErrorHandler } from '../error-handler.js';
+import { NotFoundError } from '../errors.js';
 
 /**
  * Exercises the global error handler in isolation: a bare Fastify instance with

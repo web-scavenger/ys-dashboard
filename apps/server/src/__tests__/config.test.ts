@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadConfig } from '../src/config.js';
+import { loadConfig } from '../config.js';
 
 describe('loadConfig', () => {
   it('applies dev defaults with an empty environment', () => {
@@ -13,6 +13,18 @@ describe('loadConfig', () => {
 
   it('coerces PORT to a number', () => {
     expect(loadConfig({ PORT: '9090' }).PORT).toBe(9090);
+  });
+
+  it('forces :memory: under test even when DATABASE_PATH is set', () => {
+    expect(
+      loadConfig({ NODE_ENV: 'test', DATABASE_PATH: './data/app.db' }).DATABASE_PATH,
+    ).toBe(':memory:');
+  });
+
+  it('honors DATABASE_PATH outside of test', () => {
+    expect(
+      loadConfig({ NODE_ENV: 'development', DATABASE_PATH: './custom.db' }).DATABASE_PATH,
+    ).toBe('./custom.db');
   });
 
   it('throws in production when a required var is missing', () => {

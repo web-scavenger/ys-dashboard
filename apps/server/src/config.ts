@@ -27,6 +27,10 @@ export const envSchema = z
     CORS_ORIGIN: z.preprocess(blankToUndefined, z.string().optional()),
     // No default: Swagger docs are opt-in. When unset, the UI is not mounted.
     SWAGGER_UI_PREFIX: z.preprocess(blankToUndefined, z.string().optional()),
+    // SQLite file path. Tests always use `:memory:` (set in the transform); a
+    // supplied DATABASE_PATH is ignored under test so a leaked .env value can't
+    // point integration tests at the on-disk dev database.
+    DATABASE_PATH: z.preprocess(blankToUndefined, z.string().optional()),
   })
   .transform((env, ctx) => {
     if (env.NODE_ENV === 'production') {
@@ -47,6 +51,8 @@ export const envSchema = z
       PORT: env.PORT ?? 8080,
       CORS_ORIGIN: env.CORS_ORIGIN ?? 'http://localhost:3000',
       SWAGGER_UI_PREFIX: env.SWAGGER_UI_PREFIX,
+      DATABASE_PATH:
+        env.NODE_ENV === 'test' ? ':memory:' : (env.DATABASE_PATH ?? './data/app.db'),
     };
   });
 

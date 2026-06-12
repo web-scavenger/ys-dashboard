@@ -1,21 +1,18 @@
 import type { FastifyInstance } from 'fastify';
-import { HelloController } from './modules/hello/hello.controller.js';
-import { HelloService } from './modules/hello/hello.service.js';
-import { InMemoryHelloRepository } from './modules/hello/hello.repository.memory.js';
+import { createDb, runMigrations } from './db/client.js';
+import { registerHelloModule } from './modules/hello/hello.module.js';
 
 /**
- * Composition root: the single place where concrete classes are instantiated
- * and dependencies are wired (manual constructor injection — no DI framework).
- * Dependencies flow inward: repository -> service -> controller. Swapping a
- * storage backend later is a one-line change here; the layers above are
- * untouched.
+ * Composition root: the single place where infrastructure (the DB) and feature
+ * modules are instantiated and wired (manual constructor injection — no DI
+ * framework). Each module exposes a `register*` function called here.
  */
 export function registerModules(app: FastifyInstance): void {
-  // --- hello module ---
-  const helloRepository = new InMemoryHelloRepository();
-  const helloService = new HelloService(helloRepository);
-  const helloController = new HelloController(helloService);
-  helloController.registerRoutes(app);
+  const { db, close } = createDb(app.config.DATABASE_PATH);
+  runMigrations(db);
+  app.addHook('onClose', () => {
+    close();
+  });
 
-  // Future modules (e.g. widgets) are wired the same way and registered here.
+  registerHelloModule(app, db);
 }
