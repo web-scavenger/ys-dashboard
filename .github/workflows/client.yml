@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build shared contracts
+      - name: Build shared packages
         run: pnpm build:types
 
       - name: Lint
