@@ -1,0 +1,106 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import type { Widget, WidgetData } from '@ys/contracts';
+import { NotFoundError, ValidationError } from '../../../common/errors.js';
+import { WidgetManager } from '../entities/widget-manager.js';
+import type { CreateWidgetInput, WidgetRepository } from '../repositories/widget.repository.js';
+import { WidgetService } from '../widget.service.js';
+
+/** Minimal in-memory fake of the repository port — keeps the service test fast
+ * and DB-free; the real query path is covered by the sqlite repository test. */
+class FakeWidgetRepository implements WidgetRepository {
+  private readonly store = new Map<number, Widget>();
+  private nextId = 1;
+
+  list(): Promise<Widget[]> {
+    return Promise.resolve([...this.store.values()].sort((a, b) => a.position - b.position));
+  }
+
+  findById(id: number): Promise<Widget | undefined> {
+    return Promise.resolve(this.store.get(id));
+  }
+
+  create(input: CreateWidgetInput): Promise<Widget> {
+    const id = this.nextId++;
+    const widget = {
+      id,
+      position: input.position,
+      type: input.type,
+      data: input.data,
+    } as Widget;
+    this.store.set(id, widget);
+    return Promise.resolve(widget);
+  }
+
+  updateData(id: number, data: WidgetData): Promise<Widget | undefined> {
+    const existing = this.store.get(id);
+    if (!existing) return Promise.resolve(undefined);
+    const updated = { ...existing, data } as Widget;
+    this.store.set(id, updated);
+    return Promise.resolve(updated);
+  }
+
+  delete(id: number): Promise<boolean> {
+    return Promise.resolve(this.store.delete(id));
+  }
+
+  maxPosition(): Promise<number | undefined> {
+    if (this.store.size === 0) return Promise.resolve(undefined);
+    return Promise.resolve(Math.max(...[...this.store.values()].map((w) => w.position)));
+  }
+}
+
+describe('WidgetService', () => {
+  let service: WidgetService;
+
+  beforeEach(() => {
+    service = new WidgetService(new FakeWidgetRepository(), new WidgetManager());
+  });
+
+  it('assigns sequential positions starting at 0', async () => {
+    const first = await service.create({ type: 'text' });
+    const second = await service.create({ type: 'line' });
+
+    expect(first.position).toBe(0);
+    expect(second.position).toBe(1);
+  });
+
+  it('creates each type with its initial data', async () => {
+    const text = await service.create({ type: 'text' });
+    const bar = await service.create({ type: 'bar' });
+
+    expect(text).toMatchObject({ type: 'text', data: { content: '' } });
+    expect(bar.type).toBe('bar');
+    expect(bar.data).toHaveProperty('points');
+  });
+
+  it('updates text content', async () => {
+    const text = await service.create({ type: 'text' });
+
+    const updated = await service.update(text.id, { content: 'hello' });
+
+    expect(updated.data).toEqual({ content: 'hello' });
+    await expect(service.list()).resolves.toContainEqual(updated);
+  });
+
+  it('rejects updates to a chart widget', async () => {
+    const line = await service.create({ type: 'line' });
+
+    await expect(service.update(line.id, { content: 'x' })).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('throws NotFoundError when updating a missing widget', async () => {
+    await expect(service.update(999, { content: 'x' })).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it('throws NotFoundError when deleting a missing widget', async () => {
+    await expect(service.delete(999)).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it('deletes an existing widget', async () => {
+    const text = await service.create({ type: 'text' });
+
+    await service.delete(text.id);
+
+    await expect(service.list()).resolves.toEqual([]);
+  });
+});

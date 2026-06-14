@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { createDb, runMigrations } from './db/client.js';
-import { registerHelloModule } from './modules/hello/hello.module.js';
+import { registerWidgetsModule } from './modules/widgets/widget.module.js';
 
 /**
  * Composition root: the single place where infrastructure (the DB) and feature
@@ -14,5 +14,5 @@ export function registerModules(app: FastifyInstance): void {
     close();
   });
 
-  registerHelloModule(app, db);
+  registerWidgetsModule(app, db);
 }
