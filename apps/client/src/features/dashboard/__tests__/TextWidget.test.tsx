@@ -23,6 +23,57 @@ describe('TextWidget', () => {
     expect(onSave).toHaveBeenCalledWith({ content: 'edited' });
   });
 
+  it('saves on Enter without inserting a newline', () => {
+    const onSave = vi.fn();
+    render(<TextWidget widget={widget} isEditing onSave={onSave} onCancel={vi.fn()} />);
+
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'edited' } });
+    fireEvent.keyDown(textarea, { key: 'Enter' });
+
+    expect(onSave).toHaveBeenCalledWith({ content: 'edited' });
+    expect(textarea.value).toBe('edited');
+  });
+
+  it('inserts a newline at the caret on Cmd+Enter without saving', () => {
+    const onSave = vi.fn();
+    render(<TextWidget widget={widget} isEditing onSave={onSave} onCancel={vi.fn()} />);
+
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'ab' } });
+    textarea.setSelectionRange(1, 1);
+    fireEvent.keyDown(textarea, { key: 'Enter', metaKey: true });
+
+    expect(onSave).not.toHaveBeenCalled();
+    expect(textarea.value).toBe('a\nb');
+    expect(textarea.selectionStart).toBe(2);
+    expect(textarea.selectionEnd).toBe(2);
+  });
+
+  it('inserts a newline on Ctrl+Enter without saving', () => {
+    const onSave = vi.fn();
+    render(<TextWidget widget={widget} isEditing onSave={onSave} onCancel={vi.fn()} />);
+
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'ab' } });
+    textarea.setSelectionRange(2, 2);
+    fireEvent.keyDown(textarea, { key: 'Enter', ctrlKey: true });
+
+    expect(onSave).not.toHaveBeenCalled();
+    expect(textarea.value).toBe('ab\n');
+  });
+
+  it('does not save on Enter while composing (IME)', () => {
+    const onSave = vi.fn();
+    render(<TextWidget widget={widget} isEditing onSave={onSave} onCancel={vi.fn()} />);
+
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'edited' } });
+    fireEvent.keyDown(textarea, { key: 'Enter', isComposing: true });
+
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
   it('calls onCancel without saving', () => {
     const onCancel = vi.fn();
     const onSave = vi.fn();
