@@ -22,6 +22,13 @@
       "when": 1781437300727,
       "tag": "0002_bright_the_professor",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1781458286370,
+      "tag": "0003_dapper_skreet",
+      "breakpoints": true
     }
   ]
 }

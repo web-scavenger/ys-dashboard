@@ -8,7 +8,15 @@ afterEach(() => {
 
 describe('widgetsApi', () => {
   it('parses a created widget against the contract', async () => {
-    const widget = { id: 1, position: 0, type: 'text', data: { content: '' } };
+    const widget = {
+      id: 1,
+      position: 0,
+      title: 'Text',
+      createdAt: '2026-06-14T00:00:00.000Z',
+      updatedAt: '2026-06-14T00:00:00.000Z',
+      type: 'text',
+      data: { content: '' },
+    };
     vi.stubGlobal(
       'fetch',
       vi.fn(() => Promise.resolve({ ok: true, status: 201, json: () => Promise.resolve(widget) })),

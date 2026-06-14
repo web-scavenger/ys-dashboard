@@ -3,7 +3,15 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { TextWidget } from '../components/TextWidget.js';
 import type { WidgetOf } from '../types.js';
 
-const widget: WidgetOf<'text'> = { id: 1, position: 0, type: 'text', data: { content: 'hello' } };
+const widget: WidgetOf<'text'> = {
+  id: 1,
+  position: 0,
+  title: 'Text',
+  createdAt: '2026-06-14T00:00:00.000Z',
+  updatedAt: '2026-06-14T00:00:00.000Z',
+  type: 'text',
+  data: { content: 'hello' },
+};
 
 describe('TextWidget', () => {
   it('shows the content in view mode', () => {

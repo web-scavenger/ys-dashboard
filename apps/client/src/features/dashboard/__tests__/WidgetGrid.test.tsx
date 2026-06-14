@@ -6,7 +6,15 @@ import type { Widget } from '../types.js';
 
 describe('WidgetGrid', () => {
   it('renders a wrapper per widget', () => {
-    const second: Widget = { id: 2, position: 1, type: 'text', data: { content: 'second' } };
+    const second: Widget = {
+      id: 2,
+      position: 1,
+      title: 'Text',
+      createdAt: '2026-06-14T00:00:00.000Z',
+      updatedAt: '2026-06-14T00:00:00.000Z',
+      type: 'text',
+      data: { content: 'second' },
+    };
     renderWithClient(<WidgetGrid widgets={[textWidget, second]} />);
 
     expect(screen.getByText('hello')).toBeInTheDocument();

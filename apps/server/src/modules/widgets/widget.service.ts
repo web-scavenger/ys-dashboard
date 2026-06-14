@@ -1,7 +1,12 @@
-import type { CreateWidgetRequest, UpdateWidgetRequest, Widget } from '@ys/contracts';
+import type {
+  CreateWidgetRequest,
+  ListWidgetsQuery,
+  UpdateWidgetRequest,
+  Widget,
+} from '@ys/contracts';
 import { NotFoundError } from '../../common/errors.js';
 import type { WidgetManager } from './entities/widget-manager.js';
-import type { WidgetRepository } from './repositories/widget.repository.js';
+import type { UpdateWidgetInput, WidgetRepository } from './repositories/widget.repository.js';
 
 /**
  * Orchestration for the widgets module. Stays type-agnostic: all per-type
@@ -15,19 +20,20 @@ export class WidgetService {
     private readonly manager: WidgetManager,
   ) {}
 
-  list(): Promise<Widget[]> {
-    return this.repository.list();
+  list(query: ListWidgetsQuery): Promise<Widget[]> {
+    return this.repository.list(query);
+  }
+
+  async nextPosition(): Promise<number> {
+    const max = await this.repository.maxPosition();
+    return max === undefined ? 0 : max + 1;
   }
 
   async create(input: CreateWidgetRequest): Promise<Widget> {
-    // Append at the end. `maxPosition` + 1 is not atomic, but this is a
-    // single-user dashboard so concurrent creates aren't a concern; positions
-    // are append-only and may leave gaps after deletes, which is fine for
-    // ordering. Revisit (e.g. a DB sequence/transaction) if it goes multi-user.
-    const max = await this.repository.maxPosition();
-    const position = max === undefined ? 0 : max + 1;
+    const position = await this.nextPosition();
     const data = this.manager.createInitialData(input.type);
-    return this.repository.create({ type: input.type, position, data });
+    const title = this.manager.defaultTitle(input.type);
+    return this.repository.create({ type: input.type, position, title, data });
   }
 
   async update(id: number, input: UpdateWidgetRequest): Promise<Widget> {
@@ -35,10 +41,16 @@ export class WidgetService {
     if (!existing) {
       throw new NotFoundError(`Widget ${id} not found`);
     }
-    // Throws ValidationError for non-editable types — the service doesn't know
-    // or care which types those are.
-    const data = this.manager.applyUpdate(existing.type, existing.data, input);
-    const updated = await this.repository.updateData(id, data);
+    const patch: UpdateWidgetInput = {};
+    if (input.title !== undefined) {
+      patch.title = input.title;
+    }
+    if (input.content !== undefined) {
+      // Throws ValidationError for non-editable types — the service doesn't know
+      // or care which types those are.
+      patch.data = this.manager.applyUpdate(existing.type, existing.data, input);
+    }
+    const updated = await this.repository.update(id, patch);
     if (!updated) {
       throw new NotFoundError(`Widget ${id} not found`);
     }

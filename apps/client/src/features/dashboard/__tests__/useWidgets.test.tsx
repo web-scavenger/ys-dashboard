@@ -9,7 +9,15 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const textWidget: Widget = { id: 1, position: 0, type: 'text', data: { content: 'hi' } };
+const ts = { createdAt: '2026-06-14T00:00:00.000Z', updatedAt: '2026-06-14T00:00:00.000Z' };
+const textWidget: Widget = {
+  id: 1,
+  position: 0,
+  title: 'Text',
+  ...ts,
+  type: 'text',
+  data: { content: 'hi' },
+};
 
 /** Renders the widgets list + create hooks against a real (retry-off) QueryClient. */
 function renderWidgetHooks() {
@@ -24,7 +32,14 @@ function renderWidgetHooks() {
 
 describe('useCreateWidget', () => {
   it('appends an optimistic widget immediately, then settles to the server widget', async () => {
-    const created: Widget = { id: 5, position: 1, type: 'text', data: { content: '' } };
+    const created: Widget = {
+      id: 5,
+      position: 1,
+      title: 'Text',
+      ...ts,
+      type: 'text',
+      data: { content: '' },
+    };
     // Hold the POST pending so the optimistic state is observable before settle.
     let resolvePost!: (value: unknown) => void;
     const postPending = new Promise((resolve) => {
@@ -51,11 +66,12 @@ describe('useCreateWidget', () => {
 
     result.current.create.mutate({ type: 'text' });
 
-    // While the POST is in flight, the optimistic entry is appended with a
-    // negative (temp) id that can't collide with a server id.
+    // While the POST is in flight, the optimistic entry appears with a negative
+    // (temp) id that can't collide with a server id. Its position in the list
+    // follows the active ordering, so locate it by id rather than index.
     await waitFor(() => expect(result.current.list.data).toHaveLength(2));
-    const optimistic = result.current.list.data?.[1];
-    expect(optimistic?.id).toBeLessThan(0);
+    const optimistic = result.current.list.data?.find((widget) => widget.id < 0);
+    expect(optimistic).toBeDefined();
 
     // Let the POST settle; the list refetches and the real widget replaces it.
     resolvePost({ ok: true, status: 201, json: () => Promise.resolve(created) });

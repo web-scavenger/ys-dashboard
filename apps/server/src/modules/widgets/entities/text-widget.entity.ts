@@ -8,7 +8,11 @@ export class TextWidgetEntity extends WidgetEntity<TextWidgetData> {
     return { content: '' };
   }
 
-  override applyUpdate(_current: TextWidgetData, patch: UpdateWidgetRequest): TextWidgetData {
-    return { content: patch.content };
+  defaultTitle(): string {
+    return 'Text';
+  }
+
+  override applyUpdate(current: TextWidgetData, patch: UpdateWidgetRequest): TextWidgetData {
+    return { content: patch.content ?? current.content };
   }
 }

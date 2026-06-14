@@ -26,6 +26,10 @@ export class WidgetManager {
     return this.get(type).createInitialData();
   }
 
+  defaultTitle(type: WidgetType): string {
+    return this.get(type).defaultTitle();
+  }
+
   applyUpdate(type: WidgetType, current: WidgetData, patch: UpdateWidgetRequest): WidgetData {
     return this.get(type).applyUpdate(current, patch);
   }

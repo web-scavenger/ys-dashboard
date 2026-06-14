@@ -24,9 +24,16 @@ export function renderWithClient(ui: ReactElement): RenderResult {
   return render(ui, { wrapper });
 }
 
+const timestamps = {
+  createdAt: '2026-06-14T00:00:00.000Z',
+  updatedAt: '2026-06-14T00:00:00.000Z',
+};
+
 export const textWidget: Widget = {
   id: 1,
   position: 0,
+  title: 'Text',
+  ...timestamps,
   type: 'text',
   data: { content: 'hello' },
 };
@@ -34,6 +41,8 @@ export const textWidget: Widget = {
 export const lineWidget: Widget = {
   id: 2,
   position: 1,
+  title: 'Line chart',
+  ...timestamps,
   type: 'line',
   data: { points: [{ label: 'Point 1', value: 10 }] },
 };
@@ -41,6 +50,8 @@ export const lineWidget: Widget = {
 export const barWidget: Widget = {
   id: 3,
   position: 2,
+  title: 'Bar chart',
+  ...timestamps,
   type: 'bar',
   data: { points: [{ label: 'Point 1', value: 20 }] },
 };
