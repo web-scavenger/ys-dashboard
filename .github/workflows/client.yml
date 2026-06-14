@@ -33,7 +33,7 @@ jobs:
       - name: Build shared packages
         run: pnpm build:types
 
-      - name: Lint
+      - name: Run Lint
         run: pnpm exec eslint apps/client packages/contracts
 
       - name: Build client
