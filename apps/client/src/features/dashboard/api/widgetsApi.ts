@@ -2,14 +2,19 @@ import {
   widgetListResponseSchema,
   widgetResponseSchema,
   type CreateWidgetRequest,
+  type ListWidgetsQuery,
   type UpdateWidgetRequest,
   type Widget,
   type WidgetListResponse,
 } from '@ys/contracts';
 import { request } from '@/lib/api';
 
-export function listWidgets(): Promise<WidgetListResponse> {
-  return request('/api/widgets', widgetListResponseSchema);
+export function listWidgets(query?: Partial<ListWidgetsQuery>): Promise<WidgetListResponse> {
+  const params = new URLSearchParams();
+  if (query?.sortBy) params.set('sortBy', query.sortBy);
+  if (query?.order) params.set('order', query.order);
+  const qs = params.toString();
+  return request(`/api/widgets${qs ? `?${qs}` : ''}`, widgetListResponseSchema);
 }
 
 export function createWidget(body: CreateWidgetRequest): Promise<Widget> {

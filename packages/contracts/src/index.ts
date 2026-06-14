@@ -57,27 +57,37 @@ export const widgetTypeSchema = z.enum(['line', 'bar', 'text']);
 
 export type WidgetType = z.infer<typeof widgetTypeSchema>;
 
+/** Upper bound on a widget's editable title. */
+export const TITLE_MAX_LENGTH = 200;
+
+/** Fields shared by every widget regardless of `type`. `createdAt`/`updatedAt`
+ * are ISO 8601 strings on the wire (stored as epoch ms server-side). */
+const widgetBaseFields = {
+  id: z.number().int(),
+  position: z.number().int(),
+  title: z.string(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+};
+
 /**
- * A widget — discriminated union on `type` with shared `id`/`position`. The
+ * A widget — discriminated union on `type` with shared base fields. The
  * discriminant selects which `data` schema applies, so a widget's data can
  * never be validated against the wrong shape.
  */
 export const widgetSchema = z.discriminatedUnion('type', [
   z.object({
-    id: z.number().int(),
-    position: z.number().int(),
+    ...widgetBaseFields,
     type: z.literal('line'),
     data: chartWidgetDataSchema,
   }),
   z.object({
-    id: z.number().int(),
-    position: z.number().int(),
+    ...widgetBaseFields,
     type: z.literal('bar'),
     data: chartWidgetDataSchema,
   }),
   z.object({
-    id: z.number().int(),
-    position: z.number().int(),
+    ...widgetBaseFields,
     type: z.literal('text'),
     data: textWidgetDataSchema,
   }),
@@ -95,12 +105,35 @@ export const createWidgetRequestSchema = z.object({
 
 export type CreateWidgetRequest = z.infer<typeof createWidgetRequestSchema>;
 
-/** PATCH body — only text content is editable in this pass (additive later). */
-export const updateWidgetRequestSchema = z.object({
-  content: z.string().max(TEXT_WIDGET_MAX_LENGTH),
-});
+/** PATCH body — `title` applies to any widget; `content` only to text widgets.
+ * Both optional, but at least one must be present. */
+export const updateWidgetRequestSchema = z
+  .object({
+    title: z.string().min(1).max(TITLE_MAX_LENGTH).optional(),
+    content: z.string().max(TEXT_WIDGET_MAX_LENGTH).optional(),
+  })
+  .refine((body) => body.title !== undefined || body.content !== undefined, {
+    message: 'At least one field must be provided',
+  });
 
 export type UpdateWidgetRequest = z.infer<typeof updateWidgetRequestSchema>;
+
+/** Sortable list fields and direction for `GET /api/widgets`. Defaults to
+ * newest-first by creation time when the client sends no ordering. */
+export const widgetSortFieldSchema = z.enum(['createdAt', 'title', 'position']);
+
+export type WidgetSortField = z.infer<typeof widgetSortFieldSchema>;
+
+export const sortDirectionSchema = z.enum(['asc', 'desc']);
+
+export type SortDirection = z.infer<typeof sortDirectionSchema>;
+
+export const listWidgetsQuerySchema = z.object({
+  sortBy: widgetSortFieldSchema.default('createdAt'),
+  order: sortDirectionSchema.default('desc'),
+});
+
+export type ListWidgetsQuery = z.infer<typeof listWidgetsQuerySchema>;
 
 export const widgetListResponseSchema = z.array(widgetSchema);
 

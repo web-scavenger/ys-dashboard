@@ -18,6 +18,9 @@ export abstract class WidgetEntity<TData extends WidgetData = WidgetData> {
   /** Build the payload for a freshly created widget of this type. */
   abstract createInitialData(): TData;
 
+  /** Human-readable title assigned to a freshly created widget of this type. */
+  abstract defaultTitle(): string;
+
   /**
    * Apply an update to this widget's data. Non-editable types inherit this
    * base, which rejects the edit; editable types override it.

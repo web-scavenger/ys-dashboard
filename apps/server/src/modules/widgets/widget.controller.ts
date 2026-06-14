@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { errorResponseSchema } from '@ys/contracts';
 import {
   createWidgetRequestSchema,
+  listWidgetsQuerySchema,
   updateWidgetRequestSchema,
   widgetIdParamSchema,
   widgetListResponseSchema,
@@ -26,15 +27,17 @@ export class WidgetController {
       '/api/widgets',
       {
         schema: {
-          description: 'List all widgets, ordered by position.',
+          description:
+            'List all widgets. Order with ?sortBy=createdAt|title|position&order=asc|desc (defaults to createdAt desc).',
           tags: ['widgets'],
+          querystring: listWidgetsQuerySchema,
           response: {
             200: widgetListResponseSchema,
             500: errorResponseSchema,
           },
         },
       },
-      () => this.service.list(),
+      (request) => this.service.list(request.query),
     );
 
     typed.post(
@@ -62,7 +65,7 @@ export class WidgetController {
       '/api/widgets/:id',
       {
         schema: {
-          description: 'Update an editable widget (text content).',
+          description: 'Update a widget: title (any type) and/or text content.',
           tags: ['widgets'],
           params: widgetIdParamSchema,
           body: updateWidgetRequestSchema,

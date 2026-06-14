@@ -4,7 +4,7 @@ import type { Db } from './client.js';
 
 export interface FindOptions {
   where?: SQL;
-  orderBy?: SQL | SQLiteColumn;
+  orderBy?: SQL | SQLiteColumn | (SQL | SQLiteColumn)[];
   limit?: number;
 }
 
@@ -30,7 +30,9 @@ export abstract class BaseRepository<TTable extends SQLiteTable, TDomain> {
       query = query.where(options.where);
     }
     if (options.orderBy) {
-      query = query.orderBy(options.orderBy);
+      query = Array.isArray(options.orderBy)
+        ? query.orderBy(...options.orderBy)
+        : query.orderBy(options.orderBy);
     }
     if (options.limit !== undefined) {
       query = query.limit(options.limit);
@@ -45,7 +47,11 @@ export abstract class BaseRepository<TTable extends SQLiteTable, TDomain> {
   }
 
   protected insertOne(values: InferInsertModel<TTable>): Promise<TDomain> {
-    const row = this.db.insert(this.table).values(values).returning().get() as InferSelectModel<TTable>;
+    const row = this.db
+      .insert(this.table)
+      .values(values)
+      .returning()
+      .get() as InferSelectModel<TTable>;
     return Promise.resolve(this.mapRow(row));
   }
 
