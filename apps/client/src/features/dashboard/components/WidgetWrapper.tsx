@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import type { UpdateWidgetRequest } from '@ys/contracts';
 import { useDeleteWidget, useUpdateWidget } from '../api/useWidgets.js';
+import { useInView } from '../lib/useInView.js';
 import type { Widget } from '../types.js';
 import { WidgetMenu } from './WidgetMenu.js';
+import { WidgetPlaceholder } from './WidgetPlaceholder.js';
 import { WidgetRenderer } from './WidgetRenderer.js';
 
 interface WidgetWrapperProps {
@@ -16,6 +18,7 @@ interface WidgetWrapperProps {
  */
 export function WidgetWrapper({ widget }: WidgetWrapperProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const { ref, inView } = useInView<HTMLDivElement>();
   const updateWidget = useUpdateWidget();
   const deleteWidget = useDeleteWidget();
 
@@ -46,7 +49,10 @@ export function WidgetWrapper({ widget }: WidgetWrapperProps) {
   };
 
   return (
-    <div className="group relative flex h-64 flex-col rounded-xl border bg-card p-4 shadow-sm">
+    <div
+      ref={ref}
+      className="group relative flex h-64 flex-col rounded-xl border bg-card p-4 shadow-sm"
+    >
       <div className="absolute right-2 top-2 z-10">
         <WidgetMenu
           type={widget.type}
@@ -57,12 +63,16 @@ export function WidgetWrapper({ widget }: WidgetWrapperProps) {
       </div>
 
       <div className="min-h-0 flex-1">
-        <WidgetRenderer
-          widget={widget}
-          isEditing={isEditing}
-          onSave={handleSave}
-          onCancel={handleCancel}
-        />
+        {inView ? (
+          <WidgetRenderer
+            widget={widget}
+            isEditing={isEditing}
+            onSave={handleSave}
+            onCancel={handleCancel}
+          />
+        ) : (
+          <WidgetPlaceholder />
+        )}
       </div>
 
       {error && (

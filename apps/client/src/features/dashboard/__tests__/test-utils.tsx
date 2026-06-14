@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import { fireEvent, render, type RenderResult } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { vi } from 'vitest';
 import type { Widget } from '../types.js';
 
 /**
@@ -43,3 +44,54 @@ export const barWidget: Widget = {
   type: 'bar',
   data: { points: [{ label: 'Point 1', value: 20 }] },
 };
+
+type IoCallback = (entries: Array<{ isIntersecting: boolean }>) => void;
+
+/**
+ * Controllable `IntersectionObserver` stand-in for jsdom (which lacks the API).
+ * Install with `vi.stubGlobal('IntersectionObserver', MockIntersectionObserver)`,
+ * then drive callbacks via `MockIntersectionObserver.last().callback([...])`.
+ */
+export class MockIntersectionObserver {
+  static instances: MockIntersectionObserver[] = [];
+  callback: IoCallback;
+  observe = vi.fn();
+  disconnect = vi.fn();
+  unobserve = vi.fn();
+
+  constructor(callback: IoCallback) {
+    this.callback = callback;
+    MockIntersectionObserver.instances.push(this);
+  }
+
+  static reset() {
+    MockIntersectionObserver.instances = [];
+  }
+
+  static last() {
+    const instance = MockIntersectionObserver.instances.at(-1);
+    if (!instance) {
+      throw new Error('no IntersectionObserver was created');
+    }
+    return instance;
+  }
+}
+
+/**
+ * Stubs `getBoundingClientRect` for every element so synchronous viewport math
+ * is deterministic in jsdom (which reports all-zero rects).
+ */
+export function mockElementRect(rect: Partial<DOMRect>) {
+  return vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: 0,
+    height: 0,
+    x: 0,
+    y: 0,
+    toJSON: () => ({}),
+    ...rect,
+  } as DOMRect);
+}
