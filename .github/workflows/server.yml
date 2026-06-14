@@ -1,0 +1,40 @@
+name: server
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  ci:
+    name: Lint, build & test server
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared contracts
+        run: pnpm build:types
+
+      - name: Lint
+        run: pnpm exec eslint apps/server packages/contracts
+
+      - name: Build server
+        run: pnpm --filter @ys/server build
+
+      - name: Run tests
+        run: pnpm --filter @ys/server test
